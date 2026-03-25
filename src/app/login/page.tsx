@@ -14,16 +14,24 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    const result = await signIn("credentials", {
+    const result = (await signIn("credentials", {
       email,
       password,
-      redirect: true,
+      redirect: false,
       callbackUrl: "/",
-    });
+    })) as
+      | { error?: string; url?: string }
+      | null
+      | undefined;
 
     if (result?.error) {
       setError("Invalid credentials.");
       setLoading(false);
+      return;
+    }
+
+    if (result?.url) {
+      window.location.href = result.url;
     }
   }
 

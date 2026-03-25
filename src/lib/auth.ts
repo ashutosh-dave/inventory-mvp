@@ -26,8 +26,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { prisma } = await import("./prisma");
-        const bcryptjs = await import("bcryptjs");
-        const bcrypt = (bcryptjs as any).default ?? bcryptjs;
+        const bcryptjsModule = await import("bcryptjs");
+        const bcrypt =
+          (((bcryptjsModule as unknown) as {
+            default?: typeof bcryptjsModule;
+          }).default ?? bcryptjsModule);
 
         const user = await prisma.user.findUnique({
           where: { email: parsed.data.email.toLowerCase() },
