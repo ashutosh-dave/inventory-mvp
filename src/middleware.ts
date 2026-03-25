@@ -7,15 +7,19 @@ const protectedPrefixes = [
   "/stock-counting",
   "/low-stock",
   "/inventory-search",
+  "/movements",
+  "/products",
+  "/categories",
+  "/warehouses",
+  "/teams",
+  "/audit-log",
 ];
 
-// Prisma relies on Node.js APIs; force middleware to run in the Node runtime.
 export const runtime = "nodejs";
 
 export default auth((req) => {
   const { nextUrl } = req;
 
-  // Allow NextAuth routes to remain public (sign-in, providers, callbacks).
   if (nextUrl.pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
@@ -37,5 +41,17 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ["/api/:path*", "/dashboard/:path*"],
+  matcher: [
+    "/api/:path*",
+    "/dashboard/:path*",
+    "/stock-counting/:path*",
+    "/low-stock/:path*",
+    "/inventory-search/:path*",
+    "/movements/:path*",
+    "/products/:path*",
+    "/categories/:path*",
+    "/warehouses/:path*",
+    "/teams/:path*",
+    "/audit-log/:path*",
+  ],
 };
