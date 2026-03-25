@@ -8,6 +8,12 @@ export const runtime = "nodejs";
 
 export default auth((req) => {
   const { nextUrl } = req;
+
+  // Allow NextAuth routes to remain public (sign-in, providers, callbacks).
+  if (nextUrl.pathname.startsWith("/api/auth")) {
+    return NextResponse.next();
+  }
+
   const isProtected = protectedPrefixes.some((prefix) =>
     nextUrl.pathname.startsWith(prefix),
   );

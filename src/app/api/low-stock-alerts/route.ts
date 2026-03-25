@@ -2,7 +2,7 @@ import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { fromError, ok } from "@/lib/api-response";
 import { requirePermission } from "@/lib/api-auth";
-import { AlertStatus } from "@/generated/prisma/enums";
+import { AlertStatus } from "../../../generated/prisma/enums";
 
 export async function GET(request: NextRequest) {
   try {

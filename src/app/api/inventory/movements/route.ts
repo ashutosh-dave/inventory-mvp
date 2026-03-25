@@ -7,7 +7,7 @@ import {
   AdjustmentReason,
   MovementSourceType,
   MovementType,
-} from "@/generated/prisma/enums";
+} from "../../../../generated/prisma/enums";
 
 const adjustmentReasonValues = Object.values(
   AdjustmentReason,

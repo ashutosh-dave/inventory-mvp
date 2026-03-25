@@ -6,8 +6,8 @@ import {
   AlertStatus,
   MovementSourceType,
   MovementType,
-} from "@/generated/prisma/enums";
-import type { Prisma } from "@/generated/prisma/client";
+} from "../../generated/prisma/enums";
+import type { Prisma } from "../../generated/prisma/client";
 
 class InventoryConcurrencyError extends Error {
   constructor(message = "CONCURRENT_STOCK_UPDATE") {

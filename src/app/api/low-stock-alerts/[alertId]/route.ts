@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { fromError, ok } from "@/lib/api-response";
 import { requirePermission } from "@/lib/api-auth";
 import { idSchema } from "@/lib/validators";
-import { AlertStatus } from "@/generated/prisma/enums";
+import { AlertStatus } from "../../../../generated/prisma/enums";
 import { writeAuditLog } from "@/lib/audit";
 
 const actionSchema = (value: unknown) => {
