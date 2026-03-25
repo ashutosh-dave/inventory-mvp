@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 
 export default async function Home() {
   const session = await auth();
@@ -42,40 +44,40 @@ export default async function Home() {
       <h1 className="mb-6 text-2xl font-semibold">Dashboard</h1>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <section className="rounded-lg border p-4">
-          <div className="text-sm text-muted-foreground">
-            Inventory Valuation
-          </div>
-          <div className="mt-2 text-3xl font-semibold">
-            {totalValue.toFixed(2)}
-          </div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            Total value of stock on hand (by batch unit cost).
-          </div>
-        </section>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">
+              Inventory Valuation
+            </div>
+            <div className="mt-2 text-3xl font-semibold">
+              {totalValue.toFixed(2)}
+            </div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              Total value of stock on hand (by batch unit cost).
+            </div>
+          </CardContent>
+        </Card>
 
-        <section className="rounded-lg border p-4">
-          <div className="text-sm text-muted-foreground">Low Stock Alerts</div>
-          <div className="mt-2 text-3xl font-semibold">{openAlerts}</div>
-          <div className="mt-1 text-sm text-muted-foreground">
-            Open alerts needing attention.
-          </div>
-        </section>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-sm text-muted-foreground">
+              Low Stock Alerts
+            </div>
+            <div className="mt-2 text-3xl font-semibold">{openAlerts}</div>
+            <div className="mt-1 text-sm text-muted-foreground">
+              Open alerts needing attention.
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-        <Link
-          href="/stock-counting"
-          className="rounded bg-black px-4 py-2 text-center text-white"
-        >
-          Stock Counting (Mobile)
-        </Link>
-        <Link
-          href="/api/inventory/search"
-          className="rounded border px-4 py-2 text-center"
-        >
-          Search Endpoint
-        </Link>
+        <Button asChild className="flex-1">
+          <Link href="/stock-counting">Stock Out (Mobile)</Link>
+        </Button>
+        <Button asChild variant="outline" className="flex-1">
+          <Link href="/inventory-search">Inventory Search</Link>
+        </Button>
       </div>
     </main>
   );

@@ -1,6 +1,18 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 type Warehouse = {
   id: string;
@@ -118,91 +130,104 @@ export default function StockCountingPage() {
       </p>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-3 text-lg font-semibold">Source</h2>
-          <label className="mb-2 block text-sm font-medium">Warehouse</label>
-          <select
-            className="w-full rounded border p-2"
-            value={warehouseId}
-            onChange={(e) => setWarehouseId(e.target.value)}
-          >
-            {warehouses.map((w) => (
-              <option key={w.id} value={w.id}>
-                {w.code} - {w.name}
-              </option>
-            ))}
-          </select>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Source</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Warehouse</Label>
+              <Select value={warehouseId} onValueChange={(v) => setWarehouseId(v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select warehouse" />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses.map((w) => (
+                    <SelectItem key={w.id} value={w.id}>
+                      {w.code} - {w.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-          <label className="mb-2 mt-4 block text-sm font-medium">Location</label>
-          <select
-            className="w-full rounded border p-2"
-            value={locationId}
-            onChange={(e) => setLocationId(e.target.value)}
-          >
-            {selectedWarehouse?.locations?.map((l) => (
-              <option key={l.id} value={l.id}>
-                {l.code} - {l.name}
-              </option>
-            ))}
-          </select>
-        </section>
+            <div className="space-y-2">
+              <Label>Location</Label>
+              <Select value={locationId} onValueChange={(v) => setLocationId(v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select location" />
+                </SelectTrigger>
+                <SelectContent>
+                  {selectedWarehouse?.locations?.map((l) => (
+                    <SelectItem key={l.id} value={l.id}>
+                      {l.code} - {l.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
 
-        <section className="rounded-lg border p-4">
-          <h2 className="mb-3 text-lg font-semibold">Stock Out</h2>
-          <label className="mb-2 block text-sm font-medium">Product SKU</label>
-          <div className="flex gap-2">
-            <input
-              className="w-full rounded border p-2"
-              value={sku}
-              onChange={(e) => setSku(e.target.value)}
-              placeholder="e.g. SKU-COLA-001"
-            />
-            <button
-              className="rounded bg-primary px-3 py-2 text-primary-foreground"
-              onClick={loadProduct}
-              disabled={!sku.trim() || loading}
-              type="button"
-            >
-              Load
-            </button>
-          </div>
-
-          {product ? (
-            <div className="mt-3 text-sm">
-              <div className="font-medium">{product.name}</div>
-              <div className="text-muted-foreground">
-                Base unit: {product.baseUnit.code}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Stock Out</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Product SKU</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={sku}
+                  onChange={(e) => setSku(e.target.value)}
+                  placeholder="e.g. SKU-COLA-001"
+                />
+                <Button
+                  onClick={() => void loadProduct()}
+                  disabled={!sku.trim() || loading}
+                  type="button"
+                >
+                  Load
+                </Button>
               </div>
             </div>
-          ) : null}
 
-          <label className="mb-2 mt-4 block text-sm font-medium">
-            Quantity (base unit)
-          </label>
-          <input
-            className="w-full rounded border p-2"
-            type="number"
-            min={1}
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value || "0", 10))}
-          />
+            {product ? (
+              <div className="rounded-lg border p-3 text-sm">
+                <div className="font-medium">{product.name}</div>
+                <div className="text-muted-foreground">
+                  Base unit: {product.baseUnit.code}
+                </div>
+              </div>
+            ) : null}
 
-          <label className="mb-2 mt-4 block text-sm font-medium">Reason</label>
-          <input
-            className="w-full rounded border p-2"
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-          />
+            <div className="space-y-2">
+              <Label>Quantity (base unit)</Label>
+              <Input
+                type="number"
+                min={1}
+                value={quantity}
+                onChange={(e) =>
+                  setQuantity(parseInt(e.target.value || "0", 10))
+                }
+              />
+            </div>
 
-          <button
-            className="mt-4 w-full rounded bg-black px-4 py-2 text-white disabled:opacity-50"
-            onClick={submitStockOut}
-            disabled={!product || loading || !warehouseId || !locationId}
-            type="button"
-          >
-            {loading ? "Submitting..." : "Record Stock-Out"}
-          </button>
-        </section>
+            <div className="space-y-2">
+              <Label>Reason</Label>
+              <Textarea value={note} onChange={(e) => setNote(e.target.value)} />
+            </div>
+
+            <Button
+              className="w-full"
+              onClick={() => void submitStockOut()}
+              disabled={!product || loading || !warehouseId || !locationId}
+              type="button"
+            >
+              {loading ? "Submitting..." : "Record Stock-Out"}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       {message ? (

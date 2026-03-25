@@ -1,6 +1,11 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Link from "next/link";
 import "./globals.css";
+import { auth } from "@/lib/auth";
+import { SignOutButton } from "@/components/auth/sign-out-button";
+import { Badge } from "@/components/ui/badge";
+import type { Session } from "next-auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -22,12 +27,75 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // RootLayout is a Server Component; we can safely fetch the session here.
+  // This enables the authenticated app shell navigation.
+  const sessionPromise = auth() as unknown as Promise<Session | null>;
+
   return (
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {/* Note: session is fetched in async Server Component context */}
+        <AppShell sessionPromise={sessionPromise}>{children}</AppShell>
+      </body>
     </html>
+  );
+}
+
+async function AppShell({
+  children,
+  sessionPromise,
+}: {
+  children: React.ReactNode;
+  sessionPromise: Promise<Session | null>;
+}) {
+  const session = await sessionPromise;
+
+  return (
+    <div className="flex min-h-screen flex-col">
+      {session?.user ? (
+        <header className="border-b bg-background">
+          <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 p-4">
+            <div className="flex items-center gap-3">
+              <div className="text-base font-semibold">Inventory ERP</div>
+              <Badge variant="secondary">
+                {session.user.role ?? "WAREHOUSE_USER"}
+              </Badge>
+            </div>
+            <nav className="flex items-center gap-2">
+              <Link
+                href="/"
+                className="rounded px-3 py-2 text-sm hover:bg-muted"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/stock-counting"
+                className="rounded px-3 py-2 text-sm hover:bg-muted"
+              >
+                Stock Counting
+              </Link>
+              <Link
+                href="/low-stock"
+                className="rounded px-3 py-2 text-sm hover:bg-muted"
+              >
+                Low Stock
+              </Link>
+              <Link
+                href="/inventory-search"
+                className="rounded px-3 py-2 text-sm hover:bg-muted"
+              >
+                Search
+              </Link>
+            </nav>
+            <SignOutButton />
+          </div>
+        </header>
+      ) : null}
+
+      <div className="flex-1">{children}</div>
+    </div>
   );
 }

@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 
-const protectedPrefixes = ["/api", "/dashboard", "/stock-counting"];
+const protectedPrefixes = [
+  "/api",
+  "/dashboard",
+  "/stock-counting",
+  "/low-stock",
+  "/inventory-search",
+];
 
 // Prisma relies on Node.js APIs; force middleware to run in the Node runtime.
 export const runtime = "nodejs";
