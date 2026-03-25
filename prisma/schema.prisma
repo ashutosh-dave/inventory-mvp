@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -11,5 +5,330 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String             @id @default(cuid())
+  email        String             @unique
+  passwordHash String
+  name         String
+  role         Role               @default(WAREHOUSE_USER)
+  isActive     Boolean            @default(true)
+  departmentId String?
+  department   Department?        @relation(fields: [departmentId], references: [id])
+  teamMembers  TeamMember[]
+  transactions StockTransaction[] @relation("TransactionPerformer")
+  auditLogs    AuditLog[]         @relation("AuditPerformer")
+  alerts       LowStockAlert[]    @relation("AlertAcknowledger")
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+
+  @@index([departmentId])
+}
+
+enum Role {
+  ADMIN
+  PROCUREMENT_MANAGER
+  WAREHOUSE_MANAGER
+  WAREHOUSE_USER
+  AUDITOR
+}
+
+model Department {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  users       User[]
+  teams       Team[]
+  createdAt   DateTime @default(now())
+}
+
+model Team {
+  id           String       @id @default(cuid())
+  name         String
+  departmentId String?
+  department   Department?  @relation(fields: [departmentId], references: [id])
+  members      TeamMember[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  @@unique([name, departmentId])
+  @@index([departmentId])
+}
+
+model TeamMember {
+  id        String   @id @default(cuid())
+  userId    String
+  teamId    String
+  joinedAt  DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  team      Team     @relation(fields: [teamId], references: [id])
+
+  @@unique([userId, teamId])
+  @@index([teamId])
+}
+
+model ProductCategory {
+  id          String    @id @default(cuid())
+  name        String
+  description String?
+  deletedAt   DateTime?
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([name, deletedAt])
+}
+
+model Product {
+  id                     String                  @id @default(cuid())
+  sku                    String                  @unique
+  name                   String
+  categoryId             String
+  category               ProductCategory         @relation(fields: [categoryId], references: [id])
+  baseUnitId             String
+  baseUnit               Unit                    @relation("ProductBaseUnit", fields: [baseUnitId], references: [id])
+  reorderPoint           Int                     @default(0)
+  preferredPurchaseUnitId String?
+  preferredPurchaseUnit  Unit?                   @relation("ProductPreferredPurchaseUnit", fields: [preferredPurchaseUnitId], references: [id])
+  preferredSalesUnitId   String?
+  preferredSalesUnit     Unit?                   @relation("ProductPreferredSalesUnit", fields: [preferredSalesUnitId], references: [id])
+  isActive               Boolean                 @default(true)
+  deletedAt              DateTime?
+  conversions            ProductUnitConversion[]
+  batches                Batch[]
+  inventoryBalances      InventoryBalance[]
+  ledgerEntries          StockLedgerEntry[]
+  alerts                 LowStockAlert[]
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+
+  @@index([name])
+  @@index([categoryId])
+  @@index([deletedAt])
+}
+
+model Unit {
+  id                   String                  @id @default(cuid())
+  code                 String                  @unique
+  name                 String
+  baseProducts         Product[]               @relation("ProductBaseUnit")
+  purchaseProducts     Product[]               @relation("ProductPreferredPurchaseUnit")
+  salesProducts        Product[]               @relation("ProductPreferredSalesUnit")
+  conversionFrom       ProductUnitConversion[] @relation("ConversionFromUnit")
+  conversionTo         ProductUnitConversion[] @relation("ConversionToUnit")
+  createdAt            DateTime                @default(now())
+}
+
+model ProductUnitConversion {
+  id          String   @id @default(cuid())
+  productId   String
+  fromUnitId  String
+  toUnitId    String
+  multiplier  Decimal  @db.Decimal(18, 6)
+  isDefaultIn Boolean  @default(false)
+  isDefaultOut Boolean @default(false)
+  product     Product  @relation(fields: [productId], references: [id])
+  fromUnit    Unit     @relation("ConversionFromUnit", fields: [fromUnitId], references: [id])
+  toUnit      Unit     @relation("ConversionToUnit", fields: [toUnitId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([productId, fromUnitId, toUnitId])
+  @@index([productId])
+}
+
+model Warehouse {
+  id         String              @id @default(cuid())
+  code       String              @unique
+  name       String
+  isActive   Boolean             @default(true)
+  locations  InventoryLocation[]
+  balances   InventoryBalance[]
+  ledgerEntries StockLedgerEntry[]
+  alerts     LowStockAlert[]
+  createdAt  DateTime            @default(now())
+  updatedAt  DateTime            @updatedAt
+}
+
+model InventoryLocation {
+  id          String              @id @default(cuid())
+  warehouseId String
+  code        String
+  name        String
+  type        LocationType
+  isActive    Boolean             @default(true)
+  warehouse   Warehouse           @relation(fields: [warehouseId], references: [id])
+  balances    InventoryBalance[]
+  ledgerEntries StockLedgerEntry[]
+  alerts      LowStockAlert[]
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@unique([warehouseId, code])
+  @@index([warehouseId, type])
+}
+
+enum LocationType {
+  MAIN_STORE
+  DAMAGED_GOODS
+  ON_TRANSIT
+  RECEIVING
+  PICKING
+  QUARANTINE
+}
+
+model Batch {
+  id               String             @id @default(cuid())
+  productId        String
+  batchNumber      String
+  manufacturedAt   DateTime?
+  expiryDate       DateTime?
+  receivedAt       DateTime           @default(now())
+  unitCost         Decimal            @db.Decimal(18, 4)
+  supplierRef      String?
+  product          Product            @relation(fields: [productId], references: [id])
+  balances         InventoryBalance[]
+  ledgerEntries    StockLedgerEntry[]
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  @@unique([productId, batchNumber])
+  @@index([productId, expiryDate, receivedAt])
+}
+
+model InventoryBalance {
+  id             String            @id @default(cuid())
+  productId      String
+  batchId        String
+  warehouseId    String
+  locationId     String
+  quantityOnHand Int               @default(0)
+  quantityReserved Int             @default(0)
+  version        Int               @default(0)
+  product        Product           @relation(fields: [productId], references: [id])
+  batch          Batch             @relation(fields: [batchId], references: [id])
+  warehouse      Warehouse         @relation(fields: [warehouseId], references: [id])
+  location       InventoryLocation @relation(fields: [locationId], references: [id])
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@unique([batchId, locationId])
+  @@index([productId, warehouseId, locationId])
+  @@index([productId, quantityOnHand])
+  @@index([batchId, quantityOnHand])
+}
+
+model StockTransaction {
+  id             String            @id @default(cuid())
+  type           MovementType
+  sourceType     MovementSourceType
+  sourceRef      String?
+  idempotencyKey String?           @unique
+  performedById  String
+  reasonCode     AdjustmentReason?
+  reasonNote     String?
+  performer      User              @relation("TransactionPerformer", fields: [performedById], references: [id])
+  entries        StockLedgerEntry[]
+  createdAt      DateTime          @default(now())
+
+  @@index([type, createdAt])
+  @@index([sourceType, sourceRef])
+  @@index([performedById, createdAt])
+}
+
+model StockLedgerEntry {
+  id              String            @id @default(cuid())
+  transactionId   String
+  productId       String
+  batchId         String
+  warehouseId     String
+  locationId      String
+  quantityChange  Int
+  openingQty      Int
+  closingQty      Int
+  unitCostSnapshot Decimal         @db.Decimal(18, 4)
+  transaction     StockTransaction @relation(fields: [transactionId], references: [id])
+  product         Product          @relation(fields: [productId], references: [id])
+  batch           Batch            @relation(fields: [batchId], references: [id])
+  warehouse       Warehouse        @relation(fields: [warehouseId], references: [id])
+  location        InventoryLocation @relation(fields: [locationId], references: [id])
+  createdAt       DateTime         @default(now())
+
+  @@index([productId, createdAt])
+  @@index([batchId, createdAt])
+  @@index([warehouseId, locationId, createdAt])
+  @@index([transactionId])
+}
+
+enum MovementType {
+  STOCK_IN
+  STOCK_OUT
+  TRANSFER
+  ADJUSTMENT
+}
+
+enum MovementSourceType {
+  PURCHASE
+  SALE
+  INTERNAL_USE
+  TRANSFER
+  ADJUSTMENT
+  STOCK_COUNT
+  RETURN
+}
+
+enum AdjustmentReason {
+  CYCLE_COUNT_CORRECTION
+  DAMAGE
+  THEFT_OR_LOSS
+  EXPIRED
+  QA_REJECTION
+  SYSTEM_CORRECTION
+  MANUAL_CORRECTION
+}
+
+model LowStockAlert {
+  id             String          @id @default(cuid())
+  productId      String
+  warehouseId    String?
+  locationId     String?
+  triggerQty     Int
+  reorderPoint   Int
+  status         AlertStatus     @default(OPEN)
+  acknowledgedById String?
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  product        Product         @relation(fields: [productId], references: [id])
+  warehouse      Warehouse?      @relation(fields: [warehouseId], references: [id])
+  location       InventoryLocation? @relation(fields: [locationId], references: [id])
+  acknowledgedBy User?           @relation("AlertAcknowledger", fields: [acknowledgedById], references: [id])
+  createdAt      DateTime        @default(now())
+
+  @@index([status, createdAt])
+  @@index([productId, status])
+  @@index([warehouseId, locationId, status])
+}
+
+enum AlertStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  entityType   String
+  entityId     String
+  action       String
+  beforeValue  Json?
+  afterValue   Json?
+  performedById String
+  ipAddress    String?
+  userAgent    String?
+  performedBy  User     @relation("AuditPerformer", fields: [performedById], references: [id])
+  createdAt    DateTime @default(now())
+
+  @@index([entityType, entityId, createdAt])
+  @@index([performedById, createdAt])
 }
