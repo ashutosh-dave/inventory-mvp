@@ -104,14 +104,14 @@ export async function GET(request: NextRequest) {
       };
     }
 
-    const [data, total] = await Promise.all([
+    const [rows, total] = await Promise.all([
       prisma.stockTransaction.findMany({
         where,
         orderBy: { createdAt: "desc" },
         take,
         skip,
         include: {
-          performedBy: { select: { id: true, name: true, email: true } },
+          performer: { select: { id: true, name: true, email: true } },
           entries: {
             include: {
               product: { select: { id: true, sku: true, name: true } },
@@ -124,6 +124,11 @@ export async function GET(request: NextRequest) {
       }),
       prisma.stockTransaction.count({ where }),
     ]);
+
+    const data = rows.map(({ performer, ...rest }) => ({
+      ...rest,
+      performedBy: performer,
+    }));
 
     return ok({ data, total, take, skip });
   } catch (error) {

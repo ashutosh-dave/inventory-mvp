@@ -12,7 +12,8 @@ import {
   ArrowRight,
   TrendingUp,
   AlertTriangle,
-  PackageMinus,
+  ArrowRightLeft,
+  Package,
 } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -215,10 +216,16 @@ async function Dashboard() {
         </h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <QuickAction
-            icon={<PackageMinus className="h-4 w-4" />}
-            title="Stock Out"
-            description="Record a sale or usage"
-            href="/stock-counting"
+            icon={<ArrowRightLeft className="h-4 w-4" />}
+            title="All Movements"
+            description="Stock in, out, transfer, adjust"
+            href="/movements"
+          />
+          <QuickAction
+            icon={<Package className="h-4 w-4" />}
+            title="Products"
+            description="Manage product catalog"
+            href="/products"
           />
           <QuickAction
             icon={<Search className="h-4 w-4" />}
@@ -227,16 +234,10 @@ async function Dashboard() {
             href="/inventory-search"
           />
           <QuickAction
-            icon={<AlertTriangle className="h-4 w-4" />}
-            title="Low Stock Alerts"
-            description="Review and resolve alerts"
-            href="/low-stock"
-          />
-          <QuickAction
             icon={<ClipboardCheck className="h-4 w-4" />}
-            title="Audit Logs"
+            title="Audit Log"
             description="View immutable history"
-            href="/inventory-search"
+            href="/audit-log"
           />
         </div>
       </div>
