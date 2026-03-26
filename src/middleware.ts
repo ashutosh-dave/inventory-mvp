@@ -15,8 +15,18 @@ const protectedPrefixes = [
   "/audit-log",
 ];
 
-const AUTH_COOKIE_DEV = "authjs.session-token";
-const AUTH_COOKIE_PROD = "__Secure-authjs.session-token";
+const SESSION_COOKIE_NAMES = [
+  "authjs.session-token",
+  "__Secure-authjs.session-token",
+  "next-auth.session-token",
+  "__Secure-next-auth.session-token",
+  "__Host-authjs.session-token",
+  "__Host-next-auth.session-token",
+];
+
+function hasSessionCookie(req: NextRequest): boolean {
+  return SESSION_COOKIE_NAMES.some((name) => req.cookies.has(name));
+}
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
@@ -31,10 +41,7 @@ export function middleware(req: NextRequest) {
 
   if (!isProtected) return NextResponse.next();
 
-  const hasSession =
-    req.cookies.has(AUTH_COOKIE_PROD) || req.cookies.has(AUTH_COOKIE_DEV);
-
-  if (!hasSession) {
+  if (!hasSessionCookie(req)) {
     if (pathname.startsWith("/api")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
