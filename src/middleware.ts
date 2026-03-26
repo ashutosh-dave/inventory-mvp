@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 const protectedPrefixes = [
   "/api",
@@ -15,30 +16,33 @@ const protectedPrefixes = [
   "/audit-log",
 ];
 
-export const runtime = "nodejs";
+export async function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
 
-export default auth((req) => {
-  const { nextUrl } = req;
-
-  if (nextUrl.pathname.startsWith("/api/auth")) {
+  if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
   const isProtected = protectedPrefixes.some((prefix) =>
-    nextUrl.pathname.startsWith(prefix),
+    pathname.startsWith(prefix),
   );
 
   if (!isProtected) return NextResponse.next();
 
-  if (!req.auth) {
-    if (nextUrl.pathname.startsWith("/api")) {
+  const token = await getToken({
+    req,
+    secret: process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET,
+  });
+
+  if (!token) {
+    if (pathname.startsWith("/api")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    return NextResponse.redirect(new URL("/login", nextUrl));
+    return NextResponse.redirect(new URL("/login", req.url));
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
