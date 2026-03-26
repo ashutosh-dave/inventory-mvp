@@ -37,7 +37,11 @@ export default function LoginPage() {
 
     if (result?.url) {
       window.location.href = result.url;
+      return;
     }
+
+    setError("Sign-in failed. Please try again.");
+    setLoading(false);
   }
 
   return (

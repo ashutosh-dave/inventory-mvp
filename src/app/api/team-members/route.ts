@@ -14,7 +14,10 @@ export async function GET(request: NextRequest) {
     const data = await prisma.teamMember.findMany({
       where,
       orderBy: { joinedAt: "desc" },
-      include: { user: true, team: { include: { department: true } } },
+      include: {
+        user: { select: { id: true, email: true, name: true, role: true, isActive: true } },
+        team: { include: { department: true } },
+      },
     });
     return ok(data);
   } catch (error) {

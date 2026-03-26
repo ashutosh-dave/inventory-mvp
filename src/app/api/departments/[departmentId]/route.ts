@@ -14,7 +14,10 @@ export async function GET(
     const departmentId = idSchema.parse(departmentIdParam);
     const data = await prisma.department.findUnique({
       where: { id: departmentId },
-      include: { users: true, teams: true },
+      include: {
+        users: { select: { id: true, email: true, name: true, role: true, isActive: true } },
+        teams: true,
+      },
     });
     return ok(data);
   } catch (error) {

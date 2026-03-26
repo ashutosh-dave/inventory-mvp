@@ -8,7 +8,10 @@ export async function GET() {
     await requirePermission("team:manage");
     const data = await prisma.department.findMany({
       orderBy: { name: "asc" },
-      include: { users: true, teams: true },
+      include: {
+        users: { select: { id: true, email: true, name: true, role: true, isActive: true } },
+        teams: true,
+      },
     });
     return ok(data);
   } catch (error) {
