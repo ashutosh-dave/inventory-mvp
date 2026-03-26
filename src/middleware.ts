@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import type { NextRequest } from "next/server";
 
 const protectedPrefixes = [
   "/api",
@@ -15,7 +15,10 @@ const protectedPrefixes = [
   "/audit-log",
 ];
 
-export default auth((req) => {
+const AUTH_COOKIE_DEV = "authjs.session-token";
+const AUTH_COOKIE_PROD = "__Secure-authjs.session-token";
+
+export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   if (pathname.startsWith("/api/auth")) {
@@ -28,7 +31,10 @@ export default auth((req) => {
 
   if (!isProtected) return NextResponse.next();
 
-  if (!req.auth) {
+  const hasSession =
+    req.cookies.has(AUTH_COOKIE_PROD) || req.cookies.has(AUTH_COOKIE_DEV);
+
+  if (!hasSession) {
     if (pathname.startsWith("/api")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -36,7 +42,7 @@ export default auth((req) => {
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: [
