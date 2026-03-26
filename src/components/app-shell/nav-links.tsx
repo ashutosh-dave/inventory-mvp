@@ -15,6 +15,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AlertBadge } from "./alert-badge";
 
 const sections = [
   {
@@ -23,7 +24,7 @@ const sections = [
       { href: "/", label: "Dashboard", icon: LayoutDashboard },
       { href: "/movements", label: "Movements", icon: ArrowRightLeft },
       { href: "/stock-counting", label: "Quick Stock Out", icon: PackageMinus },
-      { href: "/low-stock", label: "Low Stock", icon: AlertTriangle },
+      { href: "/low-stock", label: "Low Stock", icon: AlertTriangle, showBadge: true },
     ],
   },
   {
@@ -48,7 +49,7 @@ const mobileLinks = [
   { href: "/", label: "Home", icon: LayoutDashboard },
   { href: "/movements", label: "Move", icon: ArrowRightLeft },
   { href: "/products", label: "Products", icon: Package },
-  { href: "/inventory-search", label: "Search", icon: Search },
+  { href: "/low-stock", label: "Alerts", icon: AlertTriangle, showBadge: true },
   { href: "/audit-log", label: "Audit", icon: ClipboardList },
 ] as const;
 
@@ -63,9 +64,10 @@ export function DesktopNav() {
             {section.title}
           </div>
           <div className="flex flex-col gap-0.5">
-            {section.links.map(({ href, label, icon: Icon }) => {
+            {section.links.map(({ href, label, icon: Icon, ...rest }) => {
               const active =
                 href === "/" ? pathname === "/" : pathname.startsWith(href);
+              const showBadge = "showBadge" in rest && rest.showBadge;
               return (
                 <Link
                   key={href}
@@ -79,6 +81,7 @@ export function DesktopNav() {
                 >
                   <Icon className="h-4 w-4 shrink-0" />
                   {label}
+                  {showBadge ? <AlertBadge /> : null}
                 </Link>
               );
             })}
@@ -94,21 +97,29 @@ export function MobileNav() {
 
   return (
     <nav className="flex items-center justify-around">
-      {mobileLinks.map(({ href, label, icon: Icon }) => {
+      {mobileLinks.map(({ href, label, icon: Icon, ...rest }) => {
         const active =
           href === "/" ? pathname === "/" : pathname.startsWith(href);
+        const showBadge = "showBadge" in rest && rest.showBadge;
         return (
           <Link
             key={href}
             href={href}
             className={cn(
-              "flex flex-col items-center gap-1 px-2 py-2 text-[10px] font-medium transition-colors",
+              "relative flex flex-col items-center gap-1 px-2 py-2 text-[10px] font-medium transition-colors",
               active
                 ? "text-primary"
                 : "text-muted-foreground hover:text-foreground",
             )}
           >
-            <Icon className="h-5 w-5" />
+            <span className="relative">
+              <Icon className="h-5 w-5" />
+              {showBadge ? (
+                <span className="absolute -right-1.5 -top-1.5">
+                  <AlertBadge />
+                </span>
+              ) : null}
+            </span>
             {label}
           </Link>
         );

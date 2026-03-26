@@ -328,9 +328,19 @@ export default function MovementsPage() {
         setMessage({ type: "error", text: await parseError(res) });
         return;
       }
-      setMessage({ type: "success", text: "Movement recorded successfully." });
       resetForm();
       void loadMovements();
+
+      const alertRes = await fetch("/api/low-stock-alerts?status=OPEN").catch(() => null);
+      const alerts = alertRes?.ok ? await alertRes.json().catch(() => []) : [];
+      if (Array.isArray(alerts) && alerts.length > 0) {
+        setMessage({
+          type: "success",
+          text: `Movement recorded. ⚠ ${alerts.length} low-stock alert${alerts.length > 1 ? "s" : ""} currently open.`,
+        });
+      } else {
+        setMessage({ type: "success", text: "Movement recorded successfully." });
+      }
     } catch {
       setMessage({ type: "error", text: "Network error — please try again." });
     } finally {
